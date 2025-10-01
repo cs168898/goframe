@@ -724,7 +724,7 @@ func TestGroupBy(t *testing.T) {
 	keyName := "dept"
 	var errors error
 
-	grouped := df.Groupby("dept")
+	grouped := df.Groupby(keyName)
 	err := grouped.Error()
 	if err != nil {
 		t.Fatalf("An error occured: %v", err)
@@ -780,6 +780,31 @@ func TestGroupBy(t *testing.T) {
 			t.Errorf("Summed data did not match expected results. \nExpected: %#v \nGot: %#v", expectedDataframe, sumDf)
 		}
 	})
+
+	t.Run("Mean", func(t *testing.T) {
+		sumDf, err := grouped.Mean("score")
+		if err != nil {
+			t.Fatalf("Error trying to average groups: %v", err)
+		}
+
+		// check if sumDf is what we expected
+		expectedDataframe := goframe.NewDataFrame()
+		groupKeys := []any{"IT", "HR"}
+
+		groupKeyColumn := goframe.NewColumn("GroupKey", groupKeys)
+		expectedDataframe.AddColumn(groupKeyColumn)
+
+		scores := []any{600.0, 300.0}
+		scoreColumn := goframe.NewColumn("score", scores)
+		expectedDataframe.AddColumn(scoreColumn)
+
+		match := dataFramesEqual(expectedDataframe, sumDf)
+		if !match {
+			t.Logf("expected data: %v", expectedDataframe.String())
+			t.Logf("data obtained: %v", sumDf)
+			t.Errorf("Averaged data did not match expected results. \nExpected: %#v \nGot: %#v", expectedDataframe, sumDf)
+		}
+	})
 }
 
 // Test sum on a handcrafted GroupedDataFrame (no GroupBy)
@@ -828,6 +853,8 @@ func TestSum(t *testing.T) {
 		}
 }
 
+
+
 /*
 The dataFramesEqual function checks if the data values are numerically equal in 2 different dataframes by converting both
 datatypes into float64 before comparing them.
@@ -875,3 +902,4 @@ func dataFramesEqual(a, b *goframe.DataFrame) bool {
 	}
 	return true
 }
+
